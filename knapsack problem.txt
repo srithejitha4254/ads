@@ -1,0 +1,90 @@
+#include <stdio.h>
+#define MAX 50
+int n;
+int weights[MAX], profits[MAX];
+int capacity;
+
+int bestProfit = 0;
+int currentProfit = 0;
+int currentWeight = 0;
+int bestSet[MAX];
+int include[MAX];
+int promising(int i) {
+    int j, totWeight;
+    float bound;
+    if (currentWeight >= capacity)
+        return 0;
+    bound = currentProfit;
+    j = i + 1;
+    totWeight = currentWeight;
+    while (j < n && totWeight + weights[j] <= capacity) {
+        totWeight += weights[j];
+        bound += profits[j];
+        j++;
+    }
+
+    if (j < n)
+        bound += (capacity - totWeight) * ((float)profits[j] / weights[j]);
+
+    return bound > bestProfit;
+}
+
+void knapsack(int i) {
+    if (i == n) {
+        if (currentProfit > bestProfit) {
+            bestProfit = currentProfit;
+            for (int k = 0; k < n; k++)
+                bestSet[k] = include[k];
+        }
+        return;
+    }
+
+    if (currentWeight + weights[i] <= capacity) {
+        include[i] = 1;
+        currentWeight += weights[i];
+        currentProfit += profits[i];
+
+        if (promising(i))
+            knapsack(i + 1);
+
+        currentWeight -= weights[i];
+        currentProfit -= profits[i];
+    }
+
+    include[i] = 0;
+    if (promising(i))
+        knapsack(i + 1);
+}
+
+int main() {
+    printf("Enter number of items: ");
+    scanf("%d", &n);
+
+    printf("Enter weights of items:\n");
+    for (int i = 0; i < n; i++)
+        scanf("%d", &weights[i]);
+
+    printf("Enter profits of items:\n");
+    for (int i = 0; i < n; i++)
+        scanf("%d", &profits[i]);
+
+    printf("Enter knapsack capacity: ");
+    scanf("%d", &capacity);
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            float r1 = (float)profits[j] / weights[j];
+            float r2 = (float)profits[j+1] / weights[j+1];
+            if (r1 < r2) {
+                int temp = profits[j]; profits[j] = profits[j+1]; profits[j+1] = temp;
+                temp = weights[j]; weights[j] = weights[j+1]; weights[j+1] = temp;
+            }
+        }
+    }
+    knapsack(0);
+    printf("\nBest Profit = %d\n", bestProfit);
+    printf("Items included:\n");
+    for (int i = 0; i < n; i++)
+        printf("%d ", bestSet[i]);
+    printf("\n");
+    return 0;
+}
