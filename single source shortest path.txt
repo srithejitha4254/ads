@@ -1,0 +1,168 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <time.h>
+
+#define INF 999999
+
+int minDistance(int dist[], int visited[], int n) {
+    int min = INF, index = -1;
+    for (int i = 0; i < n; i++)
+        if (!visited[i] && dist[i] < min) {
+            min = dist[i];
+            index = i;
+        }
+    return index;
+}
+
+void dijkstraMatrix(int **graph, int n, int src) {
+    int dist[n], visited[n];
+    for (int i = 0; i < n; i++) { dist[i] = INF; visited[i] = 0; }
+    dist[src] = 0;
+
+    for (int count = 0; count < n - 1; count++) {
+        int u = minDistance(dist, visited, n);
+        visited[u] = 1;
+        for (int v = 0; v < n; v++)
+            if (!visited[v] && graph[u][v] && dist[u] + graph[u][v] < dist[v])
+                dist[v] = dist[u] + graph[u][v];
+    }
+}
+
+typedef struct Node {
+    int vertex, weight;
+    struct Node *next;
+} Node;
+
+Node* createNode(int v, int w) {
+    Node* n = (Node*)malloc(sizeof(Node));
+    n->vertex = v;
+    n->weight = w;
+    n->next = NULL;
+    return n;
+}
+
+typedef struct {
+    Node **list;
+    int size;
+} GraphList;
+
+GraphList* createGraphList(int n) {
+    GraphList* g = (GraphList*)malloc(sizeof(GraphList));
+    g->size = n;
+    g->list = (Node**)malloc(n * sizeof(Node*));
+    for (int i = 0; i < n; i++) g->list[i] = NULL;
+    return g;
+}
+
+void addEdge(GraphList* g, int u, int v, int w) {
+    Node* n = createNode(v, w);
+    n->next = g->list[u];
+    g->list[u] = n;
+}
+
+typedef struct {
+    int vertex, dist;
+} Pair;
+
+void swap(Pair *a, Pair *b) {
+    Pair t = *a; *a = *b; *b = t;
+}
+
+typedef struct {
+    Pair *heap;
+    int size;
+} MinHeap;
+
+MinHeap* createHeap(int n) {
+    MinHeap *h = (MinHeap*)malloc(sizeof(MinHeap));
+    h->heap = (Pair*)malloc(n * sizeof(Pair));
+    h->size = 0;
+    return h;
+}
+
+void push(MinHeap *h, int v, int d) {
+    int i = h->size++;
+    h->heap[i].vertex = v;
+    h->heap[i].dist = d;
+    while (i && h->heap[i].dist < h->heap[(i - 1) / 2].dist) {
+        swap(&h->heap[i], &h->heap[(i - 1) / 2]);
+        i = (i - 1) / 2;
+    }
+}
+
+Pair pop(MinHeap *h) {
+    Pair root = h->heap[0];
+    h->heap[0] = h->heap[--h->size];
+    int i = 0;
+    while (1) {
+        int l = 2*i + 1, r = 2*i + 2, small = i;
+        if (l < h->size && h->heap[l].dist < h->heap[small].dist) small = l;
+        if (r < h->size && h->heap[r].dist < h->heap[small].dist) small = r;
+        if (small == i) break;
+        swap(&h->heap[i], &h->heap[small]);
+        i = small;
+    }
+    return root;
+}
+
+void dijkstraList(GraphList* g, int src) {
+    int n = g->size, dist[n], visited[n];
+    for (int i = 0; i < n; i++) { dist[i] = INF; visited[i] = 0; }
+    dist[src] = 0;
+
+    MinHeap* h = createHeap(n);
+    push(h, src, 0);
+
+    while (h->size) {
+        Pair p = pop(h);
+        int u = p.vertex;
+        if (visited[u]) continue;
+        visited[u] = 1;
+
+        Node *temp = g->list[u];
+        while (temp) {
+            int v = temp->vertex;
+            int w = temp->weight;
+            if (!visited[v] && dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                push(h, v, dist[v]);
+            }
+            temp = temp->next;
+        }
+    }
+}
+
+int main() {
+    int n, e;
+    scanf("%d %d", &n, &e);
+
+    int **matrix = (int**)malloc(n * sizeof(int*));
+    for (int i = 0; i < n; i++)
+        matrix[i] = (int*)calloc(n, sizeof(int));
+
+    GraphList* g = createGraphList(n);
+
+    for (int i = 0; i < e; i++) {
+        int u, v, w;
+        scanf("%d %d %d", &u, &v, &w);
+        matrix[u][v] = w;
+        addEdge(g, u, v, w);
+    }
+
+    clock_t start, end;
+
+    start = clock();
+    dijkstraMatrix(matrix, n, 0);
+    end = clock();
+    double timeMatrix = (double)(end - start) / CLOCKS_PER_SEC;
+
+    start = clock();
+    dijkstraList(g, 0);
+    end = clock();
+    double timeList = (double)(end - start) / CLOCKS_PER_SEC;
+
+    printf("%f\n%f\n", timeMatrix, timeList);
+
+    return 0;
+}

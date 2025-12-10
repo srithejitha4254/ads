@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+void swap(int *a, int *b) {
+    int t = *a;
+    *a = *b;
+    *b = t;
+}
+
+int partition(int a[], int low, int high) {
+    int pivot = a[high];
+    int i = low - 1;
+    for (int j = low; j < high; j++) {
+        if (a[j] < pivot) {
+            i++;
+            swap(&a[i], &a[j]);
+        }
+    }
+    swap(&a[i + 1], &a[high]);
+    return i + 1;
+}
+
+void quicksort(int a[], int low, int high) {
+    if (low < high) {
+        int p = partition(a, low, high);
+        quicksort(a, low, p - 1);
+        quicksort(a, p + 1, high);
+    }
+}
+
+void generate_random(int a[], int n) {
+    for (int i = 0; i < n; i++)
+        a[i] = rand() % n;
+}
+
+void generate_sorted(int a[], int n) {
+    for (int i = 0; i < n; i++)
+        a[i] = i;
+}
+
+void generate_reverse(int a[], int n) {
+    for (int i = 0; i < n; i++)
+        a[i] = n - i;
+}
+
+int main() {
+    int sizes[] = {1000, 5000, 10000, 20000, 30000};
+    int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
+
+    for (int s = 0; s < num_sizes; s++) {
+        int n = sizes[s];
+        int *a = (int*)malloc(n * sizeof(int));
+        clock_t start, end;
+
+        generate_sorted(a, n);
+        start = clock();
+        quicksort(a, 0, n - 1);
+        end = clock();
+        double best = (double)(end - start) / CLOCKS_PER_SEC;
+
+        generate_random(a, n);
+        start = clock();
+        quicksort(a, 0, n - 1);
+        end = clock();
+        double avg = (double)(end - start) / CLOCKS_PER_SEC;
+
+        generate_reverse(a, n);
+        start = clock();
+        quicksort(a, 0, n - 1);
+        end = clock();
+        double worst = (double)(end - start) / CLOCKS_PER_SEC;
+
+        printf("\nInput size: %d\n", n);
+        printf("Best case (sorted): %f seconds\n", best);
+        printf("Average case (random): %f seconds\n", avg);
+        printf("Worst case (reverse sorted): %f seconds\n", worst);
+
+        free(a);
+    }
+
+    return 0;
+}
