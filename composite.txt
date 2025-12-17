@@ -1,0 +1,30 @@
+#include <stdio.h>
+
+int isComposite(int num) {
+    int i;
+    if (num <= 3)
+        return 0;
+
+    for (i = 2; i <= num / 2; i++) {
+        if (num % i == 0)
+            return 1;
+    }
+    return 0;
+}
+
+int main() {
+    int n, count = 0, num = 4;
+
+    printf("Enter how many composite numbers to print: ");
+    scanf("%d", &n);
+
+    while (count < n) {
+        if (isComposite(num)) {
+            printf("%d ", num);
+            count++;
+        }
+        num++;
+    }
+
+    return 0;
+}
