@@ -1,0 +1,28 @@
+#include <stdio.h>
+#define MAX 5
+
+int q[MAX], front = 0, rear = -1;
+
+void enqueue(int x) {
+    if (rear == MAX - 1) return;
+    q[++rear] = x;
+}
+
+void dequeue() {
+    if (front > rear) return;
+    front++;
+}
+
+void display() {
+    for (int i = front; i <= rear; i++)
+        printf("%d ", q[i]);
+}
+
+int main() {
+    enqueue(5);
+    enqueue(10);
+    enqueue(15);
+    dequeue();
+    display();
+    return 0;
+}
